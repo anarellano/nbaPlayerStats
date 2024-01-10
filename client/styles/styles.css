@@ -1,0 +1,57 @@
+/* globals.css */
+.nbaPlayers {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #181717 !important;
+}
+
+.nbaPlayers td,
+.nbaPlayers th {
+  padding: 12px;
+}
+
+.nbaPlayers tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.nbaPlayers tr:hover {
+  background-color: #a9a7a7;
+}
+
+.nbaPlayers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: center;
+  background-color: #04aa6d !important;
+  color: white;
+}
+
+.playerD {
+  background-color: #04aa6d;
+}
+
+.buttons-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* .searchBox input {
+  width: 100%;
+} */
+.searchBox button {
+  flex-grow: 0;
+}
+.searchBox {
+  width: 100%;
+  padding: 0;
+  margin: 12px 0 12px;
+  display: flex;
+}
+
+.teamDropdown {
+  width: 100% !important;
+}
+.full-width-toggle {
+  width: 100% !important;
+}
