@@ -30,4 +30,4 @@ __pycache__
 
 client/public
 
-players.csv
+*.csv
