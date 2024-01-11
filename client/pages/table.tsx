@@ -233,8 +233,8 @@ const table = () => {
           </tr>
         </thead>
         <tbody>
-          {players.map((player, i) => (
-            <tr key={i}>
+          {players.map((player) => (
+            <tr key={player.player}>
               <td>{player.player}</td>
               <td>{player.position}</td>
               <td>{player.age}</td>
