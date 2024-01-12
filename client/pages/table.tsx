@@ -69,20 +69,16 @@ const table = () => {
     position: string
   ) => {
     try {
-      let url = `http://localhost:8000/getPlayers?page=${page}&limit=${limit}`;
+      const url = new URL("/getPlayers", "http://localhost:8000");
 
-      if (nbaPlayer) {
-        url += `&nbaPlayer=${nbaPlayer}`;
-      }
-      if (team && team !== "ALL") {
-        url += `&team=${team}`;
-      }
-      if (position && position !== "ALL") {
-        url += `&position=${position}`;
-      }
+      url.searchParams.append("page", page.toString());
+      url.searchParams.append("limit", limit.toString());
 
-      const response = await fetch(url);
-      console.log(url);
+      if (nbaPlayer) url.searchParams.append("nbaPlayer", nbaPlayer);
+      if (team) url.searchParams.append("team", team);
+      if (position) url.searchParams.append("position", position);
+
+      const response = await fetch(url.href);
 
       if (!response) {
         throw new Error("Could not get data", response);
@@ -120,7 +116,7 @@ const table = () => {
   // shows the range of your data below the table
   const pageRange = () => {
     const range = page * limit + limit;
-    const stop = playerCount - (limit - 1);
+    // const stop = playerCount - (limit - 1);
     const starting = page * limit + 1;
     const start = () => {
       if (playerCount === 0) {
