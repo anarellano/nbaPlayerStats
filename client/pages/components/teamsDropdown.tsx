@@ -57,8 +57,8 @@ function dropdown({ direction, onClick, ...args }: dropdownProps) {
       <Dropdown isOpen={dropdownOpen} toggle={toggle} direction="down">
         <DropdownToggle caret>{selectedTeam}</DropdownToggle>
         <DropdownMenu {...args}>
-          {nbaTeams.map((nbaTeam, i) => (
-            <DropdownItem key={i} onClick={() => handleClick(nbaTeam.acronym)}>
+          {nbaTeams.map((nbaTeam) => (
+            <DropdownItem key={nbaTeam.acronym} onClick={() => handleClick(nbaTeam.acronym)}>
               {nbaTeam.acronym}
             </DropdownItem>
           ))}
