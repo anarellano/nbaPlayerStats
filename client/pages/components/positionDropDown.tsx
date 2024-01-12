@@ -26,8 +26,8 @@ function positionDropDown({ onClick, ...args }: dropdownProps) {
       <Dropdown isOpen={dropdownOpen} toggle={toggle} direction="down">
         <DropdownToggle caret>{positionSelected}</DropdownToggle>
         <DropdownMenu {...args}>
-          {positions.map((position, i) => (
-            <DropdownItem key={i} onClick={() => handleClick(position)}>
+          {positions.map((position) => (
+            <DropdownItem key={position} onClick={() => handleClick(position)}>
               {position}
             </DropdownItem>
           ))}
