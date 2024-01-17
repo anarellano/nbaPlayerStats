@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import TeamDropDown from "./components/teamsDropdown";
 import PositionDropDown from "./components/positionDropDown";
+import {gql, useQuery} from `@apollo/client`
 
 interface Player {
   player: string;
@@ -36,6 +37,42 @@ interface Player {
   pointsPerGame: number;
 }
 
+const GET_PLAYERS_QUERY = gql`
+  query GetAllPlayers($team:String, $position: String, $page: Int, $limit: Int){
+    getAllPlayers(team: $team, position: $position,page: $page, limit: $limit ){
+      player
+      position
+      age
+      team
+      gamesPlayed
+      gamesStarted
+      minutesPlayed
+      fieldGoals
+      fieldGoalAttempts
+      fieldGoalPercentage
+      threePointFieldGoals
+      threePointFieldGoalAttempts
+      threePointFieldGoalPercentage
+      twoPointFieldGoals
+      twoPointFieldGoalAttempts
+      twoPointFieldGoalPercentage
+      effectiveFieldGoalPercentage
+      freeThrows
+      freeThrowAttempts
+      freeThrowPercentage
+      offensiveRebounds
+      defensiveRebounds
+      totalRebounds
+      assists
+      steals
+      blocks
+      turnovers
+      personalFouls
+      pointsPerGame
+    }
+  }
+`;
+
 const table = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [nbaPlayer, setNbaPlayer] = useState("");
@@ -46,52 +83,21 @@ const table = () => {
   const [playerCount, setPlayerCount] = useState(0);
   const [team, setTeam] = useState(""); // keep track of what team you want to find
   const [position, setPosition] = useState(""); // position dropdown data
-  console.log(position);
+
+  const {data, loading, error} = useQuery( GET_PLAYERS_QUERY, {
+    variables: {team, position, page, limit}
+  })
 
   const lastPage = Math.floor(playerCount / limit); // the last page
-  console.log(team);
-  // update URL
-  // const updateUrl = (newLimit: number, newPage: number) => {
-  //   const url = `${window.location.search}?pages=${newPage}&limit=${newLimit}`;
-  //   window.history.pushState({}, "", url);
-  // };
 
   //fetch the table data when program starts
-  useEffect(() => {
-    fetchPlayerData(page, limit, nbaPlayer, team, position);
-  }, [page, team, position, nbaPlayer]);
-  //
-  const fetchPlayerData = async (
-    page: number,
-    limit: number,
-    nbaPlayer: string,
-    team: string,
-    position: string
-  ) => {
-    try {
-      const url = new URL("/getPlayers", "http://localhost:8000");
-
-      url.searchParams.append("page", page.toString());
-      url.searchParams.append("limit", limit.toString());
-
-      if (nbaPlayer) url.searchParams.append("nbaPlayer", nbaPlayer);
-      if (team) url.searchParams.append("team", team);
-      if (position) url.searchParams.append("position", position);
-
-      const response = await fetch(url.href);
-
-      if (!response) {
-        throw new Error("Could not get data", response);
-      }
-
-      const data = await response.json();
-
-      setPlayers(data.response);
-      setPlayerCount(data.countResponse);
-    } catch (error) {
-      console.error(error);
+  useEffect(()=>{
+    if(data){
+      setPlayers(data.getAllPlayers.players); // Update state with query results
+    setPlayerCount(data.getAllPlayers.count); // Update player count
     }
-  };
+  },[data])
+
 
   // when I press next, I want the page to stop at the first row
   const handlePrevious = () => {
@@ -181,7 +187,7 @@ const table = () => {
             value={nbaPlayer}
             onChange={(e) => setNbaPlayer(e.target.value)}
             onKeyDown={handleKeyDown}
-          ></input>
+          />
           <button type="button" onClick={(e) => handleSearchClick(e)}>
             Search
           </button>
