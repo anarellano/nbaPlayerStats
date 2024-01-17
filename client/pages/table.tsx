@@ -242,7 +242,7 @@ const table = () => {
         </thead>
         <tbody>
           {data &&
-            data.getPlayers.map((player) => (
+            data.getPlayers.players.map((player) => (
               <tr key={player.player}>
                 <td>{player.player}</td>
                 <td>{player.position}</td>
