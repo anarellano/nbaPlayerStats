@@ -3,7 +3,7 @@
 import React, { use, useEffect, useState } from "react";
 import TeamDropDown from "./components/teamsDropdown";
 import PositionDropDown from "./components/positionDropDown";
-import {gql, useQuery} from `@apollo/client`
+import { gql, useQuery } from "@apollo/client";
 
 interface Player {
   player: string;
@@ -37,9 +37,16 @@ interface Player {
   pointsPerGame: number;
 }
 
+// Define the structure of the GraphQL query response
+interface PlayersData {
+  getPlayers: {
+    players: Player[];
+    count: number;
+  };
+}
 const GET_PLAYERS_QUERY = gql`
-  query GetAllPlayers($team:String, $position: String, $page: Int, $limit: Int){
-    getAllPlayers(team: $team, position: $position,page: $page, limit: $limit ){
+  query GetPlayers($team: String, $position: String, $page: Int, $limit: Int) {
+    getPlayers(team: $team, position: $position, page: $page, limit: $limit) {
       player
       position
       age
@@ -70,6 +77,7 @@ const GET_PLAYERS_QUERY = gql`
       personalFouls
       pointsPerGame
     }
+    count
   }
 `;
 
@@ -84,20 +92,19 @@ const table = () => {
   const [team, setTeam] = useState(""); // keep track of what team you want to find
   const [position, setPosition] = useState(""); // position dropdown data
 
-  const {data, loading, error} = useQuery( GET_PLAYERS_QUERY, {
-    variables: {team, position, page, limit}
-  })
+  const { data, loading, error } = useQuery<PlayersData>(GET_PLAYERS_QUERY, {
+    variables: { team, position, page, limit },
+  });
 
   const lastPage = Math.floor(playerCount / limit); // the last page
 
   //fetch the table data when program starts
-  useEffect(()=>{
-    if(data){
-      setPlayers(data.getAllPlayers.players); // Update state with query results
-    setPlayerCount(data.getAllPlayers.count); // Update player count
+  useEffect(() => {
+    if (data) {
+      setPlayers(data.getPlayers.players); // Update state with query results
+      setPlayerCount(data.getPlayers.count); // Update player count
     }
-  },[data])
-
+  }, [data]);
 
   // when I press next, I want the page to stop at the first row
   const handlePrevious = () => {
@@ -146,7 +153,6 @@ const table = () => {
     if (e.key === "Enter") {
       e.preventDefault();
       setPage(0);
-      fetchPlayerData(page, limit, nbaPlayer, team, position);
     }
     if (e.key === "ArrowRight") {
       handleNext();
@@ -160,14 +166,14 @@ const table = () => {
   const handleSearchClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setPage(0);
-    fetchPlayerData(page, limit, nbaPlayer, team, position);
+    // fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
   //filter the table by team using dropdown
   const handleDropdownClick = (selectedTeam: string) => {
     setTeam(selectedTeam);
     setPage(0);
-    fetchPlayerData(page, limit, nbaPlayer, team, position);
+    // fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
   const handlePositionClick = (selectedPosition: string) => {
@@ -175,7 +181,7 @@ const table = () => {
 
     setPosition(selectedPosition);
     setPage(0);
-    fetchPlayerData(page, limit, nbaPlayer, team, position);
+    // fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
   return (
@@ -235,39 +241,40 @@ const table = () => {
           </tr>
         </thead>
         <tbody>
-          {players.map((player) => (
-            <tr key={player.player}>
-              <td>{player.player}</td>
-              <td>{player.position}</td>
-              <td>{player.age}</td>
-              <td>{player.team}</td>
-              <td>{player.gamesPlayed}</td>
-              <td>{player.gamesStarted}</td>
-              <td>{player.minutesPlayed}</td>
-              <td>{player.fieldGoals}</td>
-              <td>{player.fieldGoalAttempts}</td>
-              <td>{player.fieldGoalPercentage}</td>
-              <td>{player.threePointFieldGoals}</td>
-              <td>{player.threePointFieldGoalAttempts}</td>
-              <td>{player.threePointFieldGoalPercentage}</td>
-              <td>{player.twoPointFieldGoals}</td>
-              <td>{player.twoPointFieldGoalAttempts}</td>
-              <td>{player.twoPointFieldGoalPercentage}</td>
-              <td>{player.effectiveFieldGoalPercentage}</td>
-              <td>{player.freeThrows}</td>
-              <td>{player.freeThrowAttempts}</td>
-              <td>{player.freeThrowPercentage}</td>
-              <td>{player.offensiveRebounds}</td>
-              <td>{player.defensiveRebounds}</td>
-              <td>{player.totalRebounds}</td>
-              <td>{player.assists}</td>
-              <td>{player.steals}</td>
-              <td>{player.blocks}</td>
-              <td>{player.turnovers}</td>
-              <td>{player.personalFouls}</td>
-              <td>{player.pointsPerGame}</td>
-            </tr>
-          ))}
+          {data &&
+            data.getPlayers.map((player) => (
+              <tr key={player.player}>
+                <td>{player.player}</td>
+                <td>{player.position}</td>
+                <td>{player.age}</td>
+                <td>{player.team}</td>
+                <td>{player.gamesPlayed}</td>
+                <td>{player.gamesStarted}</td>
+                <td>{player.minutesPlayed}</td>
+                <td>{player.fieldGoals}</td>
+                <td>{player.fieldGoalAttempts}</td>
+                <td>{player.fieldGoalPercentage}</td>
+                <td>{player.threePointFieldGoals}</td>
+                <td>{player.threePointFieldGoalAttempts}</td>
+                <td>{player.threePointFieldGoalPercentage}</td>
+                <td>{player.twoPointFieldGoals}</td>
+                <td>{player.twoPointFieldGoalAttempts}</td>
+                <td>{player.twoPointFieldGoalPercentage}</td>
+                <td>{player.effectiveFieldGoalPercentage}</td>
+                <td>{player.freeThrows}</td>
+                <td>{player.freeThrowAttempts}</td>
+                <td>{player.freeThrowPercentage}</td>
+                <td>{player.offensiveRebounds}</td>
+                <td>{player.defensiveRebounds}</td>
+                <td>{player.totalRebounds}</td>
+                <td>{player.assists}</td>
+                <td>{player.steals}</td>
+                <td>{player.blocks}</td>
+                <td>{player.turnovers}</td>
+                <td>{player.personalFouls}</td>
+                <td>{player.pointsPerGame}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
       <div className="buttons-container">
