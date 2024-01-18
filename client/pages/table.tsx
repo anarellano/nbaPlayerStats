@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import TeamDropDown from "./components/teamsDropdown";
 import PositionDropDown from "./components/positionDropDown";
 import { gql, useQuery } from "@apollo/client";
@@ -77,7 +77,6 @@ const GET_PLAYERS_QUERY = gql`
       personalFouls
       pointsPerGame
     }
-    count
   }
 `;
 
@@ -92,7 +91,7 @@ const table = () => {
   const [team, setTeam] = useState(""); // keep track of what team you want to find
   const [position, setPosition] = useState(""); // position dropdown data
 
-  const { data, loading, error } = useQuery<PlayersData>(GET_PLAYERS_QUERY, {
+  const { data } = useQuery<PlayersData>(GET_PLAYERS_QUERY, {
     variables: { team, position, page, limit },
   });
 
