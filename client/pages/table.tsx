@@ -164,7 +164,7 @@ const table = () => {
         <div>
           <PositionDropDown onClick={handlePositionClick} />
         </div>
-        <div><input type="text" onChange={e=>(setLimit(Number(e.target.value)))}/></div>
+        <div><input placeholder="limit per page"type="text" onChange={e=>(setLimit(Number(e.target.value)))}/></div>
       </div>
 
       <table className="nbaPlayers">
