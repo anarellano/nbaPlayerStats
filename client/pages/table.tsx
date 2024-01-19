@@ -6,20 +6,8 @@ import PositionDropDown from "./components/positionDropDown";
 import { gql, useQuery } from "@apollo/client";
 
 const GET_PLAYERS_QUERY = gql`
-  query GetAllPlayers(
-    $team: String
-    $position: String
-    $player: String
-    $limit: Int
-    $offset: Int
-  ) {
-    getAllPlayers(
-      team: $team
-      position: $position
-      player: $player
-      limit: $limit
-      offset: $offset
-    ) {
+  query GetAllPlayers($search: Search, $limit: Int, $offset: Int) {
+  getAllPlayers(search: $search, limit: $limit, offset: $offset) {
       total
       players {
         player
@@ -58,20 +46,23 @@ const GET_PLAYERS_QUERY = gql`
 
 const table = () => {
   const [page, setPage] = useState(0); // what page to start on
-  const [limit, setLimit] = useState(5); // how many entries you want per page
-  const [playerCount, setPlayerCount] = useState(0);
+  const [playerCount, setPlayerCount] = useState(0); //keep track of howmany entries there are
   const [team, setTeam] = useState(""); // keep track of what team you want to find
   const [position, setPosition] = useState(""); // position dropdown data
-  const [SearchPlayer, setSearchPlayer] = useState(""); // search nbaPlayer
+  const [searchPlayer, setSearchPlayer] = useState(""); // search nbaPlayer
   const [players, setPlayers] = useState([]); // mapped data
+  const [queryPlayer, setQueryPlayer]= useState("")
   
+  let limit = 5 // Entries per page
   const lastPage = Math.floor(playerCount / limit); // the last page
 
-  const { data } = useQuery(GET_PLAYERS_QUERY, {
+  const { data, loading, error, refetch} = useQuery(GET_PLAYERS_QUERY, {
     variables: {
-      team,
-      position,
-      player: SearchPlayer,
+      search:{
+        team,
+        position,
+        player: queryPlayer,
+      }, 
       limit,
       offset: page,
     }, // values comes from hooks
@@ -116,10 +107,6 @@ const table = () => {
   // buttons that needs to be pressed
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        setPage(0);
-      }
       if (e.key === "ArrowRight") {
         if(page < lastPage){
           handleNext()}
@@ -127,22 +114,30 @@ const table = () => {
       if (e.key === "ArrowLeft") {
         if (page > 0){
         handlePrevious()};
-      }
+      } 
     };
   
     window.addEventListener('keydown', handleKeyDown);
   
-    // Cleanup the event listener
+    //remove listner
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [page]);
+   
   
   // search a player
-  const handleSearchClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  const handleSearchClick = () => {
+    setQueryPlayer(searchPlayer)
     setPage(0);
+    
   };
+  const pressEnter = (e) => {
+    if (e.key === "Enter") {
+      handleSearchClick();
+    }
+  };
+
 
   //filter the table by team using dropdown
   const handleDropdownClick = (selectedTeam: string) => {
@@ -151,31 +146,40 @@ const table = () => {
   };
 
   const handlePositionClick = (selectedPosition: string) => {
+    console.log("im being hit");
+    
     setPosition(selectedPosition);
     setPage(0);
   };
 
+  if (loading) {
+    return <h1> DATA IS LOADING...</h1>;
+  }
+  if (error) {
+    return <h1> Could Not Grab Data...</h1>;
+  }
+  console.log("searchPlayer",searchPlayer);
+  
   return (
     <div>
       <div className="searchBox d-flex justify-content-around">
-        <div>
-          <input
-            type="text"
-            value={SearchPlayer}
-            onChange={(e) => setSearchPlayer(e.target.value)}
-            // onKeyDown={handleKeyDown}
-          />
-          <button type="button" onClick={(e) => handleSearchClick(e)}>
-            Search
-          </button>
-        </div>
+      <div>
+        <input
+          type="text"
+          value={searchPlayer}
+          onChange={(e) => setSearchPlayer(e.target.value)}
+          onKeyDown={pressEnter}
+        />
+        <button type="button" onClick={handleSearchClick}>
+          Search
+        </button>
+      </div>
         <div>
           <TeamDropDown direction="down" onClick={handleDropdownClick} />
         </div>
         <div>
           <PositionDropDown onClick={handlePositionClick} />
         </div>
-        <div><input placeholder="limit per page"type="text" onChange={e=>(setLimit(Number(e.target.value)))}/></div>
       </div>
 
       <table className="nbaPlayers">
@@ -214,8 +218,8 @@ const table = () => {
         </thead>
         <tbody>
           {/* added i because there are duplicates */}
-          {players.map((player, i) => (
-            <tr key={i}>
+          {players.map((player) => (
+            <tr key={player.player && player.team && player.pointsPerGame}>
               <td>{player.player}</td>
               <td>{player.position}</td>
               <td>{player.age}</td>
