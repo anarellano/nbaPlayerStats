@@ -48,8 +48,15 @@ function dropdown({ direction, onClick, ...args }: dropdownProps) {
   const toggle = () => setDropdownOpen((prevState) => !prevState);
 
   const handleClick = (team: string) => {
-    setSelectedTeam(team);
-    onClick(team);
+    setSelectedTeam(team); // updates what the drop down looks like
+
+    // Check if 'ALL' is selected
+    if (team === "ALL") {
+      onClick("");
+    } else {
+      // Handle selection for specific teams
+      onClick(team);
+    }
   };
 
   return (
@@ -58,7 +65,10 @@ function dropdown({ direction, onClick, ...args }: dropdownProps) {
         <DropdownToggle caret>{selectedTeam}</DropdownToggle>
         <DropdownMenu {...args}>
           {nbaTeams.map((nbaTeam) => (
-            <DropdownItem key={nbaTeam.acronym} onClick={() => handleClick(nbaTeam.acronym)}>
+            <DropdownItem
+              key={nbaTeam.acronym}
+              onClick={() => handleClick(nbaTeam.acronym)}
+            >
               {nbaTeam.acronym}
             </DropdownItem>
           ))}

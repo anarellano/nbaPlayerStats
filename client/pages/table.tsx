@@ -5,130 +5,96 @@ import TeamDropDown from "./components/teamsDropdown";
 import PositionDropDown from "./components/positionDropDown";
 import { gql, useQuery } from "@apollo/client";
 
-interface Player {
-  player: string;
-  position: string;
-  age: number;
-  team: string;
-  gamesPlayed: number;
-  gamesStarted: number;
-  minutesPlayed: number;
-  fieldGoals: number;
-  fieldGoalAttempts: number;
-  fieldGoalPercentage: number;
-  threePointFieldGoals: number;
-  threePointFieldGoalAttempts: number;
-  threePointFieldGoalPercentage: number;
-  twoPointFieldGoals: number;
-  twoPointFieldGoalAttempts: number;
-  twoPointFieldGoalPercentage: number;
-  effectiveFieldGoalPercentage: number;
-  freeThrows: number;
-  freeThrowAttempts: number;
-  freeThrowPercentage: number;
-  offensiveRebounds: number;
-  defensiveRebounds: number;
-  totalRebounds: number;
-  assists: number;
-  steals: number;
-  blocks: number;
-  turnovers: number;
-  personalFouls: number;
-  pointsPerGame: number;
-}
-
-// Define the structure of the GraphQL query response
-interface PlayersData {
-  getPlayers: {
-    players: Player[];
-    count: number;
-  };
-}
 const GET_PLAYERS_QUERY = gql`
-  query GetPlayers($team: String, $position: String, $page: Int, $limit: Int) {
-    getPlayers(team: $team, position: $position, page: $page, limit: $limit) {
-      player
-      position
-      age
-      team
-      gamesPlayed
-      gamesStarted
-      minutesPlayed
-      fieldGoals
-      fieldGoalAttempts
-      fieldGoalPercentage
-      threePointFieldGoals
-      threePointFieldGoalAttempts
-      threePointFieldGoalPercentage
-      twoPointFieldGoals
-      twoPointFieldGoalAttempts
-      twoPointFieldGoalPercentage
-      effectiveFieldGoalPercentage
-      freeThrows
-      freeThrowAttempts
-      freeThrowPercentage
-      offensiveRebounds
-      defensiveRebounds
-      totalRebounds
-      assists
-      steals
-      blocks
-      turnovers
-      personalFouls
-      pointsPerGame
+  query GetAllPlayers(
+    $team: String
+    $position: String
+    $player: String
+    $limit: Int
+    $offset: Int
+  ) {
+    getAllPlayers(
+      team: $team
+      position: $position
+      player: $player
+      limit: $limit
+      offset: $offset
+    ) {
+      total
+      players {
+        player
+        position
+        age
+        team
+        gamesPlayed
+        gamesStarted
+        minutesPlayed
+        fieldGoals
+        fieldGoalAttempts
+        fieldGoalPercentage
+        threePointFieldGoals
+        threePointFieldGoalAttempts
+        threePointFieldGoalPercentage
+        twoPointFieldGoals
+        twoPointFieldGoalAttempts
+        twoPointFieldGoalPercentage
+        effectiveFieldGoalPercentage
+        freeThrows
+        freeThrowAttempts
+        freeThrowPercentage
+        offensiveRebounds
+        defensiveRebounds
+        totalRebounds
+        assists
+        steals
+        blocks
+        turnovers
+        personalFouls
+        pointsPerGame
+      }
     }
   }
 `;
 
 const table = () => {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [nbaPlayer, setNbaPlayer] = useState("");
   const [page, setPage] = useState(0); // what page to start on
-  const [limit, setLimit] = useState(10); // how many entries you want per page
-  const [disableNextButton, setDisableNextButton] = useState(false);
-  const [disablePreviousButton, setDisablePreviousButton] = useState(true);
+  const [limit, setLimit] = useState(5); // how many entries you want per page
   const [playerCount, setPlayerCount] = useState(0);
   const [team, setTeam] = useState(""); // keep track of what team you want to find
   const [position, setPosition] = useState(""); // position dropdown data
-
-  const { data } = useQuery<PlayersData>(GET_PLAYERS_QUERY, {
-    variables: { team, position, page, limit },
-  });
-
+  const [SearchPlayer, setSearchPlayer] = useState(""); // search nbaPlayer
+  const [players, setPlayers] = useState([]); // mapped data
+  
   const lastPage = Math.floor(playerCount / limit); // the last page
 
-  //fetch the table data when program starts
+  const { data } = useQuery(GET_PLAYERS_QUERY, {
+    variables: {
+      team,
+      position,
+      player: SearchPlayer,
+      limit,
+      offset: page,
+    }, // values comes from hooks
+  });
+
   useEffect(() => {
     if (data) {
-      setPlayers(data.getPlayers.players); // Update state with query results
-      setPlayerCount(data.getPlayers.count); // Update player count
+      setPlayerCount(data.getAllPlayers.total);
+      setPlayers(data.getAllPlayers.players); // update for maps
     }
   }, [data]);
 
-  // when I press next, I want the page to stop at the first row
   const handlePrevious = () => {
-    if (page === 0) {
-      return;
-    }
-    const previousePage = page - 1;
-    setDisableNextButton(false);
-    setPage(previousePage);
+    setPage(page - 1);
   };
 
-  // when I press next, I want the page to stop at the last row
   const handleNext = () => {
-    if (page === lastPage) {
-      return;
-    }
-    const nextPage = page + 1;
-    setDisablePreviousButton(false);
-    setPage(nextPage);
+    setPage(page + 1);
   };
 
   // shows the range of your data below the table
   const pageRange = () => {
     const range = page * limit + limit;
-    // const stop = playerCount - (limit - 1);
     const starting = page * limit + 1;
     const start = () => {
       if (playerCount === 0) {
@@ -165,22 +131,17 @@ const table = () => {
   const handleSearchClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setPage(0);
-    // fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
   //filter the table by team using dropdown
   const handleDropdownClick = (selectedTeam: string) => {
     setTeam(selectedTeam);
     setPage(0);
-    // fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
   const handlePositionClick = (selectedPosition: string) => {
-    console.log(selectedPosition);
-
     setPosition(selectedPosition);
     setPage(0);
-    // fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
   return (
@@ -189,8 +150,8 @@ const table = () => {
         <div>
           <input
             type="text"
-            value={nbaPlayer}
-            onChange={(e) => setNbaPlayer(e.target.value)}
+            value={SearchPlayer}
+            onChange={(e) => setSearchPlayer(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           <button type="button" onClick={(e) => handleSearchClick(e)}>
@@ -203,6 +164,7 @@ const table = () => {
         <div>
           <PositionDropDown onClick={handlePositionClick} />
         </div>
+        <div><input type="text" onChange={e=>(setLimit(Number(e.target.value)))}/></div>
       </div>
 
       <table className="nbaPlayers">
@@ -240,53 +202,49 @@ const table = () => {
           </tr>
         </thead>
         <tbody>
-          {data &&
-            data.getPlayers.players.map((player) => (
-              <tr key={player.player}>
-                <td>{player.player}</td>
-                <td>{player.position}</td>
-                <td>{player.age}</td>
-                <td>{player.team}</td>
-                <td>{player.gamesPlayed}</td>
-                <td>{player.gamesStarted}</td>
-                <td>{player.minutesPlayed}</td>
-                <td>{player.fieldGoals}</td>
-                <td>{player.fieldGoalAttempts}</td>
-                <td>{player.fieldGoalPercentage}</td>
-                <td>{player.threePointFieldGoals}</td>
-                <td>{player.threePointFieldGoalAttempts}</td>
-                <td>{player.threePointFieldGoalPercentage}</td>
-                <td>{player.twoPointFieldGoals}</td>
-                <td>{player.twoPointFieldGoalAttempts}</td>
-                <td>{player.twoPointFieldGoalPercentage}</td>
-                <td>{player.effectiveFieldGoalPercentage}</td>
-                <td>{player.freeThrows}</td>
-                <td>{player.freeThrowAttempts}</td>
-                <td>{player.freeThrowPercentage}</td>
-                <td>{player.offensiveRebounds}</td>
-                <td>{player.defensiveRebounds}</td>
-                <td>{player.totalRebounds}</td>
-                <td>{player.assists}</td>
-                <td>{player.steals}</td>
-                <td>{player.blocks}</td>
-                <td>{player.turnovers}</td>
-                <td>{player.personalFouls}</td>
-                <td>{player.pointsPerGame}</td>
-              </tr>
-            ))}
+          {/* added i because there are duplicates */}
+          {players.map((player, i) => (
+            <tr key={i}>
+              <td>{player.player}</td>
+              <td>{player.position}</td>
+              <td>{player.age}</td>
+              <td>{player.team}</td>
+              <td>{player.gamesPlayed}</td>
+              <td>{player.gamesStarted}</td>
+              <td>{player.minutesPlayed}</td>
+              <td>{player.fieldGoals}</td>
+              <td>{player.fieldGoalAttempts}</td>
+              <td>{player.fieldGoalPercentage}</td>
+              <td>{player.threePointFieldGoals}</td>
+              <td>{player.threePointFieldGoalAttempts}</td>
+              <td>{player.threePointFieldGoalPercentage}</td>
+              <td>{player.twoPointFieldGoals}</td>
+              <td>{player.twoPointFieldGoalAttempts}</td>
+              <td>{player.twoPointFieldGoalPercentage}</td>
+              <td>{player.effectiveFieldGoalPercentage}</td>
+              <td>{player.freeThrows}</td>
+              <td>{player.freeThrowAttempts}</td>
+              <td>{player.freeThrowPercentage}</td>
+              <td>{player.offensiveRebounds}</td>
+              <td>{player.defensiveRebounds}</td>
+              <td>{player.totalRebounds}</td>
+              <td>{player.assists}</td>
+              <td>{player.steals}</td>
+              <td>{player.blocks}</td>
+              <td>{player.turnovers}</td>
+              <td>{player.personalFouls}</td>
+              <td>{player.pointsPerGame}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
       <div className="buttons-container">
-        <button
-          onClick={() => handlePrevious()}
-          disabled={disablePreviousButton || page === 0}
-        >
-          {" "}
-          PREVIOUS{" "}
+        <button onClick={() => handlePrevious()} disabled={page === 0}>
+          PREVIOUS
         </button>
         <button
           onClick={() => handleNext()}
-          disabled={disableNextButton || lastPage === page}
+          disabled={lastPage === page}
           onKeyDown={() => handleKeyDown}
         >
           {" "}

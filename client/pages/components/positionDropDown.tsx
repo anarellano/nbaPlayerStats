@@ -17,10 +17,16 @@ function positionDropDown({ onClick, ...args }: dropdownProps) {
   const [positionSelected, setPositionSeleceted] = useState("Select Position");
 
   const toggle = () => setDropdownOpen((prevState) => !prevState);
+
   const handleClick = (position: string) => {
-    setPositionSeleceted(position);
-    onClick(position);
+    setPositionSeleceted(position); // updates dropdown apperance
+    if (position === "ALL") {
+      onClick("");
+    } else {
+      onClick(position);
+    }
   };
+
   return (
     <div>
       <Dropdown isOpen={dropdownOpen} toggle={toggle} direction="down">
