@@ -114,19 +114,30 @@ const table = () => {
   };
 
   // buttons that needs to be pressed
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      setPage(0);
-    }
-    if (e.key === "ArrowRight") {
-      handleNext();
-    }
-    if (e.key === "ArrowLeft") {
-      handlePrevious();
-    }
-  };
-
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        setPage(0);
+      }
+      if (e.key === "ArrowRight") {
+        if(page < lastPage){
+          handleNext()}
+      }
+      if (e.key === "ArrowLeft") {
+        if (page > 0){
+        handlePrevious()};
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+  
+    // Cleanup the event listener
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [page]);
+  
   // search a player
   const handleSearchClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -152,7 +163,7 @@ const table = () => {
             type="text"
             value={SearchPlayer}
             onChange={(e) => setSearchPlayer(e.target.value)}
-            onKeyDown={handleKeyDown}
+            // onKeyDown={handleKeyDown}
           />
           <button type="button" onClick={(e) => handleSearchClick(e)}>
             Search
@@ -239,13 +250,13 @@ const table = () => {
         </tbody>
       </table>
       <div className="buttons-container">
-        <button onClick={() => handlePrevious()} disabled={page === 0}>
+        <button onClick={() => handlePrevious()} disabled={page === 0} >
           PREVIOUS
         </button>
         <button
           onClick={() => handleNext()}
           disabled={lastPage === page}
-          onKeyDown={() => handleKeyDown}
+          // onKeyDown={handleKeyDown}
         >
           {" "}
           NEXT{" "}
