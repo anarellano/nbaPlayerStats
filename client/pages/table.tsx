@@ -56,7 +56,7 @@ const table = () => {
   let limit = 5 // Entries per page
   const lastPage = Math.floor(playerCount / limit); // the last page
 
-  const { data, loading, error, refetch} = useQuery(GET_PLAYERS_QUERY, {
+  const { data, loading, error} = useQuery(GET_PLAYERS_QUERY, {
     variables: {
       search:{
         team,
@@ -219,7 +219,7 @@ const table = () => {
         <tbody>
           {/* added i because there are duplicates */}
           {players.map((player) => (
-            <tr key={player.player && player.team && player.pointsPerGame}>
+            <tr key={player.player + player.team + player.pointsPerGame}>
               <td>{player.player}</td>
               <td>{player.position}</td>
               <td>{player.age}</td>
