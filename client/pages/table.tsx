@@ -3,99 +3,120 @@
 import React, { useEffect, useState } from "react";
 import TeamDropDown from "./components/teamsDropdown";
 import PositionDropDown from "./components/positionDropDown";
-import { gql, useQuery } from "@apollo/client";
 
-const GET_PLAYERS_QUERY = gql`
-  query GetAllPlayers($search: Search, $limit: Int, $offset: Int) {
-  getAllPlayers(search: $search, limit: $limit, offset: $offset) {
-      total
-      players {
-        player
-        position
-        age
-        team
-        gamesPlayed
-        gamesStarted
-        minutesPlayed
-        fieldGoals
-        fieldGoalAttempts
-        fieldGoalPercentage
-        threePointFieldGoals
-        threePointFieldGoalAttempts
-        threePointFieldGoalPercentage
-        twoPointFieldGoals
-        twoPointFieldGoalAttempts
-        twoPointFieldGoalPercentage
-        effectiveFieldGoalPercentage
-        freeThrows
-        freeThrowAttempts
-        freeThrowPercentage
-        offensiveRebounds
-        defensiveRebounds
-        totalRebounds
-        assists
-        steals
-        blocks
-        turnovers
-        personalFouls
-        pointsPerGame
-      }
-    }
-  }
-`;
+interface Player {
+  player: string;
+  position: string;
+  age: number;
+  team: string;
+  gamesPlayed: number;
+  gamesStarted: number;
+  minutesPlayed: number;
+  fieldGoals: number;
+  fieldGoalAttempts: number;
+  fieldGoalPercentage: number;
+  threePointFieldGoals: number;
+  threePointFieldGoalAttempts: number;
+  threePointFieldGoalPercentage: number;
+  twoPointFieldGoals: number;
+  twoPointFieldGoalAttempts: number;
+  twoPointFieldGoalPercentage: number;
+  effectiveFieldGoalPercentage: number;
+  freeThrows: number;
+  freeThrowAttempts: number;
+  freeThrowPercentage: number;
+  offensiveRebounds: number;
+  defensiveRebounds: number;
+  totalRebounds: number;
+  assists: number;
+  steals: number;
+  blocks: number;
+  turnovers: number;
+  personalFouls: number;
+  pointsPerGame: number;
+}
 
 const table = () => {
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [nbaPlayer, setNbaPlayer] = useState("");
   const [page, setPage] = useState(0); // what page to start on
-  const [playerCount, setPlayerCount] = useState(0); //keep track of howmany entries there are
+  const [limit, setLimit] = useState(10); // how many entries you want per page
+  const [disableNextButton, setDisableNextButton] = useState(false);
+  const [disablePreviousButton, setDisablePreviousButton] = useState(true);
+  const [playerCount, setPlayerCount] = useState(0);
   const [team, setTeam] = useState(""); // keep track of what team you want to find
   const [position, setPosition] = useState(""); // position dropdown data
-  const [searchPlayer, setSearchPlayer] = useState(""); // search nbaPlayer
-  const [players, setPlayers] = useState([]); // mapped data
-  const [queryPlayer, setQueryPlayer]= useState("")
-  
-  let limit = 5 // Entries per page
+  console.log(position);
+
   const lastPage = Math.floor(playerCount / limit); // the last page
+  console.log(team);
+  // update URL
+  // const updateUrl = (newLimit: number, newPage: number) => {
+  //   const url = `${window.location.search}?pages=${newPage}&limit=${newLimit}`;
+  //   window.history.pushState({}, "", url);
+  // };
 
-  const { data, loading, error} = useQuery(GET_PLAYERS_QUERY, {
-    variables: {
-      search:{
-        team,
-        position,
-        player: queryPlayer,
-      }, 
-      limit,
-      offset: page,
-    }, // values comes from hooks
-  });
-
+  //fetch the table data when program starts
   useEffect(() => {
+    fetchPlayerData(page, limit, nbaPlayer, team, position);
+  }, [page, team, position, nbaPlayer]);
+  //
+  const fetchPlayerData = async (
+    page: number,
+    limit: number,
+    nbaPlayer: string,
+    team: string,
+    position: string
+  ) => {
+    try {
+      const url = new URL("/getPlayers", "http://localhost:8000");
 
-    if (data) {
-      setPlayerCount(data.getAllPlayers.total);
-      setPlayers(data.getAllPlayers.players); // update for maps
+      url.searchParams.append("page", page.toString());
+      url.searchParams.append("limit", limit.toString());
+
+      if (nbaPlayer) url.searchParams.append("nbaPlayer", nbaPlayer);
+      if (team) url.searchParams.append("team", team);
+      if (position) url.searchParams.append("position", position);
+
+      const response = await fetch(url.href);
+
+      if (!response) {
+        throw new Error("Could not get data", response);
+      }
+
+      const data = await response.json();
+
+      setPlayers(data.response);
+      setPlayerCount(data.countResponse);
+    } catch (error) {
+      console.error(error);
     }
-  }, [data]);
-
-  useEffect(()=>{
-    const params = new URLSearchParams(window.location.search)
-    const teamParams = params.get('team')
-
-    if(teamParams){
-      setTeam(teamParams)
-    }
-  },[])
-
-  const handlePrevious = () => {
-    setPage(page - 1);
   };
 
+  // when I press next, I want the page to stop at the first row
+  const handlePrevious = () => {
+    if (page === 0) {
+      return;
+    }
+    const previousePage = page - 1;
+    setDisableNextButton(false);
+    setPage(previousePage);
+  };
+
+  // when I press next, I want the page to stop at the last row
   const handleNext = () => {
-    setPage(page + 1);
+    if (page === lastPage) {
+      return;
+    }
+    const nextPage = page + 1;
+    setDisablePreviousButton(false);
+    setPage(nextPage);
   };
 
   // shows the range of your data below the table
   const pageRange = () => {
     const range = page * limit + limit;
+    // const stop = playerCount - (limit - 1);
     const starting = page * limit + 1;
     const start = () => {
       if (playerCount === 0) {
@@ -115,75 +136,56 @@ const table = () => {
   };
 
   // buttons that needs to be pressed
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "ArrowRight") {
-        if(page < lastPage){
-          handleNext()}
-      }
-      if (e.key === "ArrowLeft") {
-        if (page > 0){
-        handlePrevious()};
-      } 
-    };
-  
-    window.addEventListener('keydown', handleKeyDown);
-  
-    //remove listner
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [page]);
-   
-  
-  // search a player
-  const handleSearchClick = () => {
-    setQueryPlayer(searchPlayer)
-    setPage(0);
-    
-  };
-  const pressEnter = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleSearchClick();
+      e.preventDefault();
+      setPage(0);
+      fetchPlayerData(page, limit, nbaPlayer, team, position);
+    }
+    if (e.key === "ArrowRight") {
+      handleNext();
+    }
+    if (e.key === "ArrowLeft") {
+      handlePrevious();
     }
   };
 
+  // search a player
+  const handleSearchClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setPage(0);
+    fetchPlayerData(page, limit, nbaPlayer, team, position);
+  };
 
   //filter the table by team using dropdown
   const handleDropdownClick = (selectedTeam: string) => {
     setTeam(selectedTeam);
     setPage(0);
+    fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
   const handlePositionClick = (selectedPosition: string) => {
-    console.log("im being hit");
-    
+    console.log(selectedPosition);
+
     setPosition(selectedPosition);
     setPage(0);
+    fetchPlayerData(page, limit, nbaPlayer, team, position);
   };
 
-  if (loading) {
-    return <h1> DATA IS LOADING...</h1>;
-  }
-  if (error) {
-    return <h1> Could Not Grab Data...</h1>;
-  }
-  console.log("searchPlayer",searchPlayer);
-  
   return (
     <div>
       <div className="searchBox d-flex justify-content-around">
-      <div>
-        <input
-          type="text"
-          value={searchPlayer}
-          onChange={(e) => setSearchPlayer(e.target.value)}
-          onKeyDown={pressEnter}
-        />
-        <button type="button" onClick={handleSearchClick}>
-          Search
-        </button>
-      </div>
+        <div>
+          <input
+            type="text"
+            value={nbaPlayer}
+            onChange={(e) => setNbaPlayer(e.target.value)}
+            onKeyDown={handleKeyDown}
+          ></input>
+          <button type="button" onClick={(e) => handleSearchClick(e)}>
+            Search
+          </button>
+        </div>
         <div>
           <TeamDropDown direction="down" onClick={handleDropdownClick} />
         </div>
@@ -227,13 +229,12 @@ const table = () => {
           </tr>
         </thead>
         <tbody>
-          {/* added i because there are duplicates */}
           {players.map((player) => (
-            <tr key={player.player + player.team + player.pointsPerGame}>
+            <tr key={player.player}>
               <td>{player.player}</td>
               <td>{player.position}</td>
               <td>{player.age}</td>
-              <td><a href={`table?team=${player.team}`} target="_blank">{player.team}</a></td>
+              <td>{player.team}</td>
               <td>{player.gamesPlayed}</td>
               <td>{player.gamesStarted}</td>
               <td>{player.minutesPlayed}</td>
@@ -264,13 +265,17 @@ const table = () => {
         </tbody>
       </table>
       <div className="buttons-container">
-        <button onClick={() => handlePrevious()} disabled={page === 0} >
-          PREVIOUS
+        <button
+          onClick={() => handlePrevious()}
+          disabled={disablePreviousButton || page === 0}
+        >
+          {" "}
+          PREVIOUS{" "}
         </button>
         <button
           onClick={() => handleNext()}
-          disabled={lastPage === page}
-          // onKeyDown={handleKeyDown}
+          disabled={disableNextButton || lastPage === page}
+          onKeyDown={() => handleKeyDown}
         >
           {" "}
           NEXT{" "}
