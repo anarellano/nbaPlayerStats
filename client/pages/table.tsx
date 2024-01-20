@@ -69,11 +69,21 @@ const table = () => {
   });
 
   useEffect(() => {
+
     if (data) {
       setPlayerCount(data.getAllPlayers.total);
       setPlayers(data.getAllPlayers.players); // update for maps
     }
   }, [data]);
+
+  useEffect(()=>{
+    const params = new URLSearchParams(window.location.search)
+    const teamParams = params.get('team')
+
+    if(teamParams){
+      setTeam(teamParams)
+    }
+  },[])
 
   const handlePrevious = () => {
     setPage(page - 1);
@@ -223,7 +233,7 @@ const table = () => {
               <td>{player.player}</td>
               <td>{player.position}</td>
               <td>{player.age}</td>
-              <td>{player.team}</td>
+              <td><a href={`table?team=${player.team}`} target="_blank">{player.team}</a></td>
               <td>{player.gamesPlayed}</td>
               <td>{player.gamesStarted}</td>
               <td>{player.minutesPlayed}</td>
