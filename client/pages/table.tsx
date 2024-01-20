@@ -76,6 +76,7 @@ const table = () => {
     }
   }, [data]);
 
+  // update if there are params
   useEffect(()=>{
     const params = new URLSearchParams(window.location.search)
     const teamParams = params.get('team')
